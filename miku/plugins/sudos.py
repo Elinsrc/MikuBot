@@ -74,7 +74,7 @@ async def upgrade(c: Client, m: Message, s: Strings):
         await sm.edit_text(s("sudos_restarting"))
         await set_restarted(sm.chat.id, sm.id)
         await conn.commit()
-        args = [sys.executable, "-m", "eduu"]
+        args = [sys.executable, "-m", "miku"]
         os.execv(sys.executable, args)  # skipcq: BAN-B606
 
 
