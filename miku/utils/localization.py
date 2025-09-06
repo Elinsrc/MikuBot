@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2024 Amano LLC
+# Copyright (c) 2025 Elinsrc
 
 from __future__ import annotations
 
-import json
+import yaml
 import logging
 from collections.abc import Callable
 from functools import partial
@@ -27,7 +28,7 @@ def cache_locales(locales: list[str]) -> dict[str, dict[str, str]]:
     locales_dict = {}
 
     for locale in locales:
-        file = Path("locales", f"{locale}.json")
+        file = Path("locales", f"{locale}.yml")
 
         if not file.exists():
             logging.warning(
@@ -37,7 +38,7 @@ def cache_locales(locales: list[str]) -> dict[str, dict[str, str]]:
             )
             continue
 
-        locale_keys = json.load(file.open("r", encoding="utf8"))
+        locale_keys = yaml.safe_load(file.open("r", encoding="utf8"))
 
         if "_meta_language_name" not in locale_keys or "_meta_language_flag" not in locale_keys:
             logging.warning(
