@@ -70,8 +70,14 @@ def get_locale_string(
 Strings = Callable[[str], str]
 
 
-async def get_lang(message: CallbackQuery | Message | InlineQuery) -> str:
-    if isinstance(message, CallbackQuery):
+async def get_lang(message: CallbackQuery | Message | InlineQuery, client = None) -> str:
+    if isinstance(message, int):
+        chat_id = message
+        chat = await client.get_chat(chat_id)
+        chat_type = chat.type
+        lang = await get_db_lang(chat_id, chat_type)
+        return lang if lang in enabled_locales else default_language
+    elif isinstance(message, CallbackQuery):
         chat = message.message.chat if message.message else message.from_user
         chat_type = message.message.chat.type if message.message else ChatType.PRIVATE
     elif isinstance(message, Message):

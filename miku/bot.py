@@ -3,6 +3,7 @@
 
 import logging
 import time
+from functools import partial
 
 import hydrogram
 from hydrogram import Client
@@ -46,6 +47,7 @@ class MikuBot(Client):
         )
 
         from .database.restarted import del_restarted, get_restarted  # noqa: PLC0415
+        from miku.utils.localization import get_locale_string, get_lang
 
         wr = await get_restarted()
         await del_restarted()
@@ -59,7 +61,9 @@ class MikuBot(Client):
         try:
             await self.send_message(chat_id=LOG_CHAT, text=start_message)
             if wr:
-                await self.edit_message_text(wr[0], wr[1], text="Restarted successfully!")
+                lang = await get_lang(message=wr[0], client=self)
+                strings = partial(get_locale_string, lang)
+                await self.edit_message_text(wr[0], wr[1], text=strings("sudos_restarted"))
         except BadRequest:
             logger.warning("Unable to send message to LOG_CHAT.")
 
