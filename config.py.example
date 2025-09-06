@@ -1,0 +1,46 @@
+from typing import List
+
+# This is a template configuration file for MikuBot.
+# You can use this file as a base for your own config file by
+# copying this file to `miku/config.py` and filling in the values.
+#
+
+
+# API keys
+
+# Bot token from Bot Father
+TOKEN: str = "123123:YOUR_BOT_TOKEN_HERE"
+
+# Telegram API ID and API hash
+# Get it from https://my.telegram.org/apps
+API_ID: int = 321321
+API_HASH: str = "YOUR_API_HASH_HERE"
+
+
+# Admins/sudoers settings
+
+# Sudoers and super sudoers
+SUPER_SUDOERS: List[int] = [123456789]
+SUDOERS: List[int] = [987654321]
+
+# All super sudoers should be sudoers as well
+SUDOERS.extend(SUPER_SUDOERS)
+
+
+# Other settings
+
+# Database file path
+DATABASE_PATH = "MikuBot.db"
+
+# Number of updates that can be processed in parallel
+WORKERS = 24
+
+# Chat used for logging
+LOG_CHAT: int = 123456789
+
+# Prefixes for commands
+# e.g: /command and !command
+PREFIXES: List[str] = ["/", "!"]
+
+# List of disabled plugins
+DISABLED_PLUGINS: List[str] = []

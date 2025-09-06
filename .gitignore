@@ -1,0 +1,24 @@
+# Cache
+__pycache__/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Session files
+miku/*.session*
+
+# Database
+*.db
+
+# Bot personal config file
+config.py
+
+# Misc
+unknown_errors.txt
+miku/downloads/

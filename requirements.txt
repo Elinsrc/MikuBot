@@ -1,0 +1,19 @@
+aiohttp
+aiosqlite
+asyncio_dgram
+beautifulsoup4
+emoji_regex
+httpx[http2]
+humanfriendly
+speedtest-cli
+tgcrypto
+hydrogram @ https://github.com/hydrogram/hydrogram/archive/dev.zip
+meval
+mutagen
+Pillow
+pydantic
+regex
+uvloop
+yarl
+yt_dlp
+tenacity

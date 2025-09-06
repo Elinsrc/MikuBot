@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2018-2024 Amano LLC
+
+from hydrogram import Client, filters
+from hydrogram.types import Message
+
+from config import PREFIXES
+from miku.utils import commands, http
+from miku.utils.localization import Strings, use_chat_lang
+
+
+@Client.on_message(filters.command("dog", PREFIXES))
+@use_chat_lang
+async def dog(c: Client, m: Message, s: Strings):
+    r = await http.get("https://random.dog/woof.json")
+    rj = r.json()
+
+    await m.reply_photo(rj["url"], caption=s("dog_woof"))
+
+
+commands.add_command("dog", "general")

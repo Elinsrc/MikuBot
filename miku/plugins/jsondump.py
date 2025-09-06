@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2018-2024 Amano LLC
+
+import html
+import io
+import json
+
+from hydrogram import Client, filters
+from hydrogram.types import Message
+
+from config import PREFIXES
+from miku.utils import commands
+
+
+@Client.on_message(filters.command("jsondump", PREFIXES))
+async def jsondump(c: Client, m: Message):
+    params = m.text.split()
+    # Remove the command name.
+    params.pop(0)
+
+    # Strip all things like _client and bound methods from Message.
+    obj = json.loads(str(m))
+
+    force_file = False
+    # Remove the -f flag from list if present and set force_file to True.
+    if "-f" in params:
+        force_file = True
+        params.remove("-f")
+
+    for param in params:
+        param = int(param) if param.lstrip("-").isdecimal() else param
+        try:
+            obj = obj[param]
+        except (IndexError, KeyError) as e:
+            await m.reply_text(f"{e.__class__.__name__}: {e}")
+            return
+        # There is nothing to get anymore.
+        if obj is None:
+            break
+
+    obj = json.dumps(obj, indent=4, ensure_ascii=False)
+
+    as_file = force_file or len(obj) > 3000
+
+    if not as_file:
+        await m.reply_text(f"<code>{html.escape(obj)}</code>")
+        return
+
+    bio = io.BytesIO(obj.encode())
+    bio.name = f"dump-{m.chat.id}.json"
+    await m.reply_document(bio)
+
+
+commands.add_command("jsondump", "tools")
