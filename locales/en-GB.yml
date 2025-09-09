@@ -44,6 +44,7 @@ cmd_pin_description: "Pins the replied message in chat. <code>loud</code> can be
 cmd_ping_description: "Shows the bot delay to send a message."
 cmd_print_description: "Takes a screenshot of the specified website."
 cmd_private_not_allowed: "This command cannot be used in a private chat. If you need any help, please use the <code>/help</code> command."
+cmd_purge_description: "Purges the history up to the replied message."
 cmd_resetrules_description: "Resets the chat rules."
 cmd_resetwarns_description: "Resets user warnings."
 cmd_resetwelcome_description: "Resets the welcome message to the bot's default welcome message."
