@@ -72,7 +72,7 @@ class Database:
             count INTEGER
         );
 
-        CREATE TABLE IF NOT EXISTS spam_users(
+        CREATE TABLE IF NOT EXISTS antispam(
             chat_id INTEGER PRIMARY KEY,
             antispam_enabled INTEGER
         );

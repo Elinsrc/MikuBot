@@ -3,7 +3,7 @@
 # Copyright (c) 2025 Elinsrc
 
 from hydrogram import Client, filters
-from hydrogram.enums import ParseMode
+from hydrogram.enums import ParseMode, ChatMemberStatus as CMS
 from hydrogram.errors import BadRequest
 from hydrogram.types import ChatPrivileges, InlineKeyboardMarkup, Message, ChatMemberUpdated
 
@@ -135,10 +135,15 @@ async def disable_antispam_mode(c: Client, m: Message, s: Strings):
 @Client.on_chat_member_updated()
 @use_chat_lang
 async def greet_new_members(c: Client, m: ChatMemberUpdated, s: Strings):
-    if not m.new_chat_member or not m.new_chat_member.user:
+    if not (
+        m.new_chat_member
+        and m.new_chat_member.status not in {CMS.RESTRICTED}
+        and not m.old_chat_member
+    ):
         return
 
-    user = m.new_chat_member.user
+    user = m.new_chat_member.user if m.new_chat_member else m.from_user
+
     if user.is_bot:
         return
 
