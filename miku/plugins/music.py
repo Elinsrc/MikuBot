@@ -119,12 +119,12 @@ async def send_hits(c: Client, cb: CallbackQuery, s: Strings):
     tracks = music_service.get_tracks()
     if tracks:
         message_text = s("music_category_found").format(tracks=len(tracks), category=category)
-        await cb.message.reply_text(
+        await cb.message.edit_text(
             message_text,
             reply_markup=await music_service.build_track_buttons(tracks, 1, mid),
         )
     else:
-        await cb.message.reply_text(s("no_tracks_found"))
+        await cb.message.edit_text(s("no_tracks_found"))
 
 
 @Client.on_callback_query(filters.regex("^send_music"))
