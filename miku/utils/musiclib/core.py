@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-import logging
+from loguru import logger
 import re
 from typing import TYPE_CHECKING
 
@@ -26,8 +26,6 @@ from .exceptions import MusicServiceError
 
 if TYPE_CHECKING:
     from types import TracebackType
-
-logger = logging.getLogger(__name__)
 
 
 class Music:

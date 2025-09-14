@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2024 Amano LLC
+# Copyright (c) 2025 Elinsrc
 
-import asyncio
 import logging
+from loguru import logger
+import asyncio
 import platform
 import sys
 
@@ -10,19 +12,25 @@ from hydrogram import idle
 
 from .bot import MikuBot
 from .database import database
-from .utils import http
+from .utils import http, InterceptHandler
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] [%(levelname)s] %(name)s.%(funcName)s: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
+logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
 
 # To avoid some annoying log
 logging.getLogger("hydrogram.syncer").setLevel(logging.WARNING)
 logging.getLogger("hydrogram.client").setLevel(logging.WARNING)
 
-logger = logging.getLogger(__name__)
+logger.remove()
+
+logger.add(
+    sys.stdout,
+    format="[<green>{time:YYYY-MM-DD HH:mm:ss}</green>] "
+           "[<level>{level}</level>] "
+           "<white>{name}</white>.<white>{function}</white>: "
+           "<level>{message}</level>",
+    level="INFO",
+    colorize=True,
+)
 
 try:
     import uvloop

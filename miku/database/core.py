@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2024 Amano LLC
 
-import logging
+from loguru import logger
 
 import aiosqlite
 
 from config import DATABASE_PATH
-
-logger = logging.getLogger(__name__)
 
 
 class Database:

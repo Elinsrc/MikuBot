@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2024 Amano LLC
 
-import logging
+from loguru import logger
 import time
 from functools import partial
 
@@ -14,9 +14,6 @@ from hydrogram.raw.all import layer
 from config import API_HASH, API_ID, DISABLED_PLUGINS, LOG_CHAT, TOKEN, WORKERS
 
 from . import __commit__, __version_number__
-
-logger = logging.getLogger(__name__)
-
 
 class MikuBot(Client):
     def __init__(self):
@@ -39,12 +36,7 @@ class MikuBot(Client):
 
         self.start_time = time.time()
 
-        logger.info(
-            "MikuBot running with Hydrogram v%s (Layer %s) started on @%s. Hi!",
-            hydrogram.__version__,
-            layer,
-            self.me.username,
-        )
+        logger.info(f"MikuBot running with Hydrogram v{hydrogram.__version__} (Layer {layer}) started on @{self.me.username}. Hi!")
 
         from .database.restarted import del_restarted, get_restarted  # noqa: PLC0415
         from miku.utils.localization import get_locale_string, get_lang

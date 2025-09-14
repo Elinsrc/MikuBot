@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+import logging
+from loguru import logger
+
 import asyncio
 import math
 import operator
@@ -326,3 +329,11 @@ async def check_spam_user(user_id: int) -> bool:
         return True
 
     return False
+
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+        logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())

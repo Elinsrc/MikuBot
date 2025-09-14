@@ -18,3 +18,4 @@ yarl
 yt_dlp
 tenacity
 pyyaml
+loguru
