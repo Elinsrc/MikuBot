@@ -29,10 +29,10 @@ async def get_warns(chat_id, user_id):
 
 
 async def add_warns(chat_id, user_id, number):
-    await conn.execute(
+    cursor = await conn.execute(
         "SELECT * FROM user_warns WHERE chat_id = ? AND user_id = ?", (chat_id, user_id)
     )
-    row = await conn.fetchone()
+    row = await cursor.fetchone()
     if row:
         await conn.execute(
             "UPDATE user_warns SET count = count + ? WHERE chat_id = ? AND user_id = ?",
