@@ -2,7 +2,7 @@
 # Copyright (c) 2025 Elinsrc
 
 import io
-import logging
+from loguru import logger
 from mutagen import File
 
 from hydrogram import Client, filters
@@ -218,7 +218,7 @@ async def delete_music_menu(c: Client, query: CallbackQuery):
             del music_service.tracks_map[key]
 
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
 
 
 commands.add_command("music", "tools")

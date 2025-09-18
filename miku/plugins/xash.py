@@ -3,7 +3,7 @@
 
 import asyncio
 import re
-import logging
+from loguru import logger
 
 from hydrogram import Client, filters
 from hydrogram.types import (
@@ -182,7 +182,7 @@ async def delete_server_menu(c: Client, query: CallbackQuery):
             del server_manager.servers_map[key]
 
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
 
 
 commands.add_command("xash", "info")
