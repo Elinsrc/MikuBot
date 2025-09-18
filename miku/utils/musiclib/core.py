@@ -70,7 +70,7 @@ class Music:
             raise MusicServiceError(msg)
 
         url = self.build_search_query(keyword)
-        logger.info("Searching music with keyword: %s", keyword)
+        logger.info(f"Searching music with keyword: {keyword}")
 
         return await self._parse_tracks(url)
 
@@ -108,7 +108,7 @@ class Music:
                     )
                 ]
 
-            logger.info("Found %d tracks", len(tracks))
+            logger.info(f"Found {len(tracks)} tracks")
 
         except (aiohttp.ClientError, TimeoutError) as e:
             msg = f"Failed to search music: {e!s}"
@@ -134,7 +134,7 @@ class Music:
             msg = "Failed to initialize session"
             raise MusicServiceError(msg)
 
-        logger.info("Downloading %s for track: %s", resource_type, track_name)
+        logger.info(f"Downloading {resource_type} for track: {track_name}")
 
         try:
             async with self._session.get(
