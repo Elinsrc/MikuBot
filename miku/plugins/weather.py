@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2018-2024 Amano LLC
-# Copyright (c) 2025 Elinsrc
+# Copyright (c) 2018-2025
 
 from __future__ import annotations
 
@@ -9,6 +8,7 @@ from hydrogram import Client, filters
 from hydrogram.types import (
     InlineQuery,
     InlineQueryResultArticle,
+    InlineQueryResultPhoto,
     InputTextMessageContent,
     Message,
 )
@@ -17,10 +17,29 @@ from miku.utils import commands, http, inline_commands
 from miku.utils.localization import Strings, use_chat_lang
 
 API_KEY = '02048c30539276ca0aaca33944aa39c1'
-
 url = 'http://api.openweathermap.org/data/2.5/weather'
-
 headers = {"User-Agent": "Dalvik/2.1.0 (Linux; U; Android 12; M2012K11AG Build/SQ1D.211205.017)"}
+
+status_emojis = {
+    "01d": "☀️",
+    "01n": "🌙",
+    "02d": "🌤️",
+    "02n": "🌙☁️",
+    "03d": "⛅",
+    "03n": "☁️",
+    "04d": "☁️☁️",
+    "04n": "☁️☁️",
+    "09d": "🌧️",
+    "09n": "🌧️",
+    "10d": "🌦️",
+    "10n": "🌧️",
+    "11d": "⛈️",
+    "11n": "⛈️",
+    "13d": "❄️",
+    "13n": "❄️",
+    "50d": "🌫️",
+    "50n": "🌫️",
+}
 
 @Client.on_message(filters.command("weather", PREFIXES))
 @Client.on_inline_query(filters.regex(r"^(weather) .+", re.IGNORECASE))
@@ -45,6 +64,7 @@ async def weather(c: Client, m: InlineQuery | Message, s: Strings):
         )
         return
 
+    # Запрос к OpenWeatherMap
     r = await http.get(
         url,
         headers=headers,
@@ -76,13 +96,23 @@ async def weather(c: Client, m: InlineQuery | Message, s: Strings):
         )
         return
 
+    icon_code = weather["weather"][0]["icon"]
+    emoji = status_emojis.get(icon_code, "❔")
+    city = weather["name"]
+    country = weather["sys"]["country"]
+    temp = weather["main"]["temp"]
+    desc = weather["weather"][0]["description"]
+    wind = weather["wind"]["speed"]
+    humidity = weather["main"]["humidity"]
+    pressure = weather["main"]["pressure"] / 1000 * 750.06
+
     res = (
-        f"{s('weather_in')} {weather['sys']['country']}/{weather['name']}:\n"
-        f"{s('weather_temp')} {weather['main']['temp']:.0f}°C\n"
-        f"{s('weather_wind')} {weather['wind']['speed']}\n"
-        f"{s('weather_humidity')} {weather['main']['humidity']}%\n"
-        f"{s('weather_description')} {weather['weather'][0]['description']}\n"
-        f"{s('weather_pressure')} {weather['main']['pressure'] / 1000 * 750.06:.0f}\n"
+        f"{emoji} {s('weather_in')} {country}/{city}\n"
+        f"🌡 {s('weather_temp')} {temp:.0f}°C\n"
+        f"💨 {s('weather_wind')} {wind} m/s\n"
+        f"💧 {s('weather_humidity')} {humidity}%\n"
+        f"📋 {s('weather_description')} {desc}\n"
+        f"🔽 {s('weather_pressure')} {pressure:.0f}"
     )
 
     if isinstance(m, Message):
@@ -99,7 +129,6 @@ async def weather(c: Client, m: InlineQuery | Message, s: Strings):
         ],
         cache_time=0,
     )
-
 
 commands.add_command("weather", "info")
 inline_commands.add_command("weather <location>")
