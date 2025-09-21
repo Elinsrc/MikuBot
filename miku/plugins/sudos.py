@@ -15,8 +15,6 @@ from contextlib import redirect_stdout, suppress
 from sqlite3 import IntegrityError, OperationalError
 from typing import TYPE_CHECKING
 
-import humanfriendly
-import speedtest
 from hydrogram import Client, filters
 from hydrogram.enums import ChatType
 from hydrogram.errors import RPCError
@@ -78,21 +76,6 @@ async def upgrade(c: Client, m: Message, s: Strings):
         os.execv(sys.executable, args)  # skipcq: BAN-B606
 
 
-@Client.on_message(filters.command("eval", prefix) & sudofilter)
-async def evals(c: Client, m: Message):
-    text = m.text.split(maxsplit=1)[1]
-    try:
-        res = await meval(text, globals(), **locals())
-    except BaseException:  # skipcq
-        ev = traceback.format_exc()
-        await m.reply_text(f"<code>{html.escape(ev)}</code>")
-    else:
-        try:
-            await m.reply_text(f"<code>{html.escape(str(res))}</code>")
-        except BaseException as e:  # skipcq
-            await m.reply_text(str(e))
-
-
 @Client.on_message(filters.command("exec", prefix) & sudofilter)
 async def execs(c: Client, m: Message):
     strio = io.StringIO()
@@ -112,26 +95,6 @@ async def execs(c: Client, m: Message):
     else:
         out = "Command executed."
     await m.reply_text(out)
-
-
-@Client.on_message(filters.command("sudos_speedtest", prefix) & sudofilter)
-@use_chat_lang
-async def test_speed(c: Client, m: Message, s: Strings):
-    string = s("sudos_speedtest")
-    sent = await m.reply_text(string.format(host="", ping="", download="", upload=""))
-    s = speedtest.Speedtest()
-    bs = s.get_best_server()
-    await sent.edit_text(
-        string.format(host=bs["sponsor"], ping=int(bs["latency"]), download="", upload="")
-    )
-    dl = round(s.download() / 1024 / 1024, 2)
-    await sent.edit_text(
-        string.format(host=bs["sponsor"], ping=int(bs["latency"]), download=dl, upload="")
-    )
-    ul = round(s.upload() / 1024 / 1024, 2)
-    await sent.edit_text(
-        string.format(host=bs["sponsor"], ping=int(bs["latency"]), download=dl, upload=ul)
-    )
 
 
 @Client.on_message(filters.command("sql", prefix) & sudofilter)
@@ -185,29 +148,6 @@ async def leave_chat(c: Client, m: Message):
         chat_id = m.text.split(maxsplit=1)[1]
         with suppress(RPCError):
             await c.leave_chat(int(chat_id))
-
-
-@Client.on_message(filters.command(["bot_stats", "stats"], prefix) & sudofilter)
-async def getbotstats(c: Client, m: Message):
-    users_count = await conn.execute("select count() from users")
-    users_count = await users_count.fetchone()
-    groups_count = await conn.execute("select count() from groups")
-    groups_count = await groups_count.fetchone()
-    filters_count = await conn.execute("select count() from filters")
-    filters_count = await filters_count.fetchone()
-    notes_count = await conn.execute("select count() from notes")
-    notes_count = await notes_count.fetchone()
-    bot_uptime = round(time.time() - c.start_time)
-    bot_uptime = humanfriendly.format_timespan(bot_uptime)
-
-    await m.reply_text(
-        "<b>Bot statistics:</b>\n\n"
-        f"<b>Users:</b> {users_count[0]}\n"
-        f"<b>Groups:</b> {groups_count[0]}\n"
-        f"<b>Filters:</b> {filters_count[0]}\n"
-        f"<b>Notes:</b> {notes_count[0]}\n\n"
-        f"<b>Uptime:</b> {bot_uptime}"
-    )
 
 
 @Client.on_message(filters.command("del", prefix) & sudofilter)
