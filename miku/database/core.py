@@ -48,22 +48,6 @@ class Database:
             message_id INTEGER
         );
 
-        CREATE TABLE IF NOT EXISTS filters(
-            chat_id INTEGER ,
-            filter_name TEXT,
-            raw_data TEXT,
-            file_id TEXT,
-            filter_type TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS notes(
-            chat_id INTEGER ,
-            note_name,
-            raw_data,
-            file_id,
-            note_type
-        );
-
         CREATE TABLE IF NOT EXISTS user_warns(
             user_id INTEGER,
             chat_id INTEGER,
