@@ -150,6 +150,8 @@ parsebtn_err: "You must specify a URL and the text of the button, e.g.: <code>/p
 pastes_reply_to_document_or_text: "Please reply to a text or document to paste its content."
 print_taking_screenshot: "Taking screenshot…"
 print_usage: "<b>Usage:</b> <code>/print https://example.com</code> — Take a screenshot of the specified website."
+print_failed: "Failed to take a screenshot. Please try again later."
+print_send_failed: "Failed to send the screenshot due to error: {error}"
 purge_in_progress: "Purging messages…"
 purge_success: "Deleted <b>{count}</b> messages."
 report_admins: "{admins_list}{reported_user} Reported to the admins."

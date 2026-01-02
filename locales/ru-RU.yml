@@ -150,6 +150,8 @@ parsebtn_err: "Вы должны указать URL и текст кнопки, 
 pastes_reply_to_document_or_text: "Пожалуйста, ответьте на текст или документ, чтобы вставить его содержимое."
 print_taking_screenshot: "Делается снимок экрана…"
 print_usage: "<b>Применение:</b> <code>/print https://example.com</code> — Сделать скриншот указанного веб-сайта."
+print_failed: "Не удалось сделать скриншот. Попробуйте позже."
+print_send_failed: "Не удалось отправить скриншот из-за ошибки: {error}"
 purge_in_progress: "Очистка сообщений…"
 purge_success: "Удалено <b>{count}</b> сообщений."
 report_admins: "{admins_list}{reported_user} Кинул репорт админам."
