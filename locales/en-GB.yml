@@ -238,3 +238,7 @@ antispam_enable: "Enabled ✅\n\nTo disable, use the command: <code>/antispam of
 antispam_disable: "Disabled ❌\n\nTo enable, use the command: <code>/antispam on</code>"
 antispam_mode_status: "🛡️ Current antispam status: {status}"
 antispam_ban_msg: "🛡️ Spam bot {user} has been banned."
+antispam_verify_success: "🛡️ {user}, verification passed!"
+antispam_verify_msg: "🛡️ Hello {user}! Please verify that you are not a bot by clicking the button below within 1 minute."
+antispam_verify_not_for_you: "🛡️ This button is not for you!"
+im_notbot_btn: "I'm not a bot! ✅"

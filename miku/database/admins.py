@@ -12,7 +12,7 @@ async def check_if_del_service(chat_id: int) -> bool:
     cursor = await conn.execute("SELECT delservicemsgs FROM groups WHERE chat_id = ?", (chat_id,))
     row = await cursor.fetchone()
     await cursor.close()
-    return row[0]
+    return row[0] if row else False
 
 
 async def toggle_del_service(chat_id: int, mode: bool | None) -> None:
@@ -24,7 +24,7 @@ async def check_if_antichannelpin(chat_id: int) -> bool:
     cursor = await conn.execute("SELECT antichannelpin FROM groups WHERE chat_id = ?", (chat_id,))
     row = await cursor.fetchone()
     await cursor.close()
-    return row[0]
+    return row[0] if row else False
 
 
 async def toggle_antichannelpin(chat_id: int, mode: bool | None) -> None:

@@ -2,17 +2,76 @@
 # Copyright (c) 2018-2024 Amano LLC
 # Copyright (c) 2025 Elinsrc
 
+import asyncio
+
 from hydrogram import Client, filters
-from hydrogram.enums import ParseMode, ChatMemberStatus as CMS
+from hydrogram.enums import ParseMode, ChatMemberStatus as CMS, ChatType
 from hydrogram.errors import BadRequest
-from hydrogram.types import ChatPrivileges, InlineKeyboardMarkup, Message, ChatMemberUpdated
+from hydrogram.types import (
+    ChatPrivileges,
+    ChatPermissions,
+    InlineKeyboardMarkup, 
+    Message, 
+    ChatMemberUpdated, 
+    InlineKeyboardButton, 
+    CallbackQuery,
+)
 
 from config import PREFIXES
 from miku.database.welcome import get_welcome, set_welcome, toggle_welcome
-from miku.utils import button_parser, commands, get_format_keys, check_spam_user
+from miku.utils import button_parser, commands, get_format_keys, check_spam_user, antispam_timeout
 from miku.utils.decorators import require_admin, stop_here
 from miku.utils.localization import Strings, use_chat_lang
 from miku.database.antispam import get_antispam, enable_antispam
+
+
+VERIFY_CACHE = {}
+
+
+async def send_welcome_greeting(c: Client, chat_id: int, user, s: Strings):
+    welcome, welcome_enabled = await get_welcome(chat_id)
+    if not welcome_enabled:
+        return
+
+    if welcome is None:
+        welcome = s("welcome_default")
+
+    if "count" in get_format_keys(welcome):
+        count = await c.get_chat_members_count(chat_id)
+    else:
+        count = 0
+
+    chat_title = (await c.get_chat(chat_id)).title
+    members = [user]
+
+    mention = ", ".join(a.mention for a in members)
+    username = ", ".join(f"@{a.username}" if a.username else a.mention for a in members)
+    user_id = ", ".join(str(a.id) for a in members)
+    full_name = ", ".join(f"{a.first_name} " + (a.last_name or "") for a in members)
+    first_name = ", ".join(a.first_name for a in members)
+
+    welcome = welcome.format(
+        id=user_id,
+        username=username,
+        mention=mention,
+        first_name=first_name,
+        full_name=full_name,
+        name=full_name,
+        title=chat_title,
+        chat_title=chat_title,
+        count=count,
+    )
+
+    welcome, welcome_buttons = button_parser(welcome)
+
+    await c.send_message(
+        chat_id=chat_id,
+        text=welcome,
+        disable_web_page_preview=True,
+        reply_markup=(
+            InlineKeyboardMarkup(welcome_buttons) if welcome_buttons else None
+        ),
+    )
 
 
 @Client.on_message(filters.command(["welcomeformat", "start welcome_format_help"], PREFIXES))
@@ -158,50 +217,68 @@ async def greet_new_members(c: Client, m: ChatMemberUpdated, s: Strings):
                 s("antispam_ban_msg").format(user=user.mention),
             )
             return
+        
+        if m.chat.type == ChatType.SUPERGROUP:
+            await c.restrict_chat_member(
+                m.chat.id,
+                user.id,
+                permissions=ChatPermissions()
+                )
 
-    welcome, welcome_enabled = await get_welcome(m.chat.id)
-    if not welcome_enabled:
-        return
+            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(s("im_notbot_btn"), callback_data="antispam_verify")]])
 
-    if welcome is None:
-        welcome = s("welcome_default")
+            verify_msg = await c.send_message(
+                m.chat.id,
+                s("antispam_verify_msg").format(user=user.mention),
+                reply_markup=keyboard,
+            )
 
-    if "count" in get_format_keys(welcome):
-        count = await c.get_chat_members_count(m.chat.id)
-    else:
-        count = 0
+            task = asyncio.create_task(antispam_timeout(c, m.chat.id, user.id, verify_msg.id))
+            VERIFY_CACHE[user.id] = {
+                "task": task,
+                "chat_id": m.chat.id,
+                "user": user,
+                "strings": s,
+            }
 
-    chat_title = m.chat.title
-    members = [user]
+            return 
 
-    mention = ", ".join(a.mention for a in members)
-    username = ", ".join(f"@{a.username}" if a.username else a.mention for a in members)
-    user_id = ", ".join(str(a.id) for a in members)
-    full_name = ", ".join(f"{a.first_name} " + (a.last_name or "") for a in members)
-    first_name = ", ".join(a.first_name for a in members)
+    await send_welcome_greeting(c, m.chat.id, user, s)
 
-    welcome = welcome.format(
-        id=user_id,
-        username=username,
-        mention=mention,
-        first_name=first_name,
-        full_name=full_name,
-        name=full_name,
-        title=chat_title,
-        chat_title=chat_title,
-        count=count,
-    )
 
-    welcome, welcome_buttons = button_parser(welcome)
+@Client.on_callback_query(filters.regex("^antispam_verify$"))
+@use_chat_lang
+async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
+    user_id = cb.from_user.id
+    chat_id = cb.message.chat.id
 
-    await c.send_message(
-        chat_id=m.chat.id,
-        text=welcome,
-        disable_web_page_preview=True,
-        reply_markup=(
-            InlineKeyboardMarkup(welcome_buttons) if welcome_buttons else None
+    await c.restrict_chat_member(
+        chat_id,
+        user_id,
+        permissions=ChatPermissions(
+            can_send_messages=True,
+            can_send_media_messages=True,
+            can_send_other_messages=True,
+            can_add_web_page_previews=True,
         ),
     )
+
+    verify_cache = VERIFY_CACHE.pop(user_id, None)
+    if verify_cache and isinstance(verify_cache, dict):
+        task = verify_cache.get("task")
+        if task:
+            task.cancel()
+        
+        await send_welcome_greeting(
+            c,
+            verify_cache["chat_id"],
+            verify_cache["user"],
+            verify_cache["strings"],
+        )
+    elif verify_cache:
+        verify_cache.cancel()
+
+    await cb.message.edit_text(s("antispam_verify_success").format(user=cb.from_user.mention))
 
 
 commands.add_command("resetwelcome", "admin")

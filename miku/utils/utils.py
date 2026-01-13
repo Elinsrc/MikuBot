@@ -330,6 +330,19 @@ async def check_spam_user(user_id: int) -> bool:
 
     return False
 
+
+async def antispam_timeout(c: Client, chat_id: int, user_id: int, msg_id: int):
+    await asyncio.sleep(60) # 1 minute
+
+    try:
+        member = await c.get_chat_member(chat_id, user_id)
+        if member.status == ChatMemberStatus.RESTRICTED:
+            await c.ban_chat_member(chat_id, user_id)
+            await c.delete_messages(chat_id, msg_id)
+    except Exception:
+        pass
+    
+
 class InterceptHandler(logging.Handler):
     def emit(self, record):
         try:

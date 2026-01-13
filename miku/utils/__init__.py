@@ -18,6 +18,7 @@ from .utils import (
     split_quotes,
     sudofilter,
     check_spam_user,
+    antispam_timeout,
     InterceptHandler,
 )
 
@@ -38,5 +39,6 @@ __all__: list[str] = [
     "split_quotes",
     "sudofilter",
     "check_spam_user",
+    "antispam_timeout",
     "InterceptHandler",
 ]
