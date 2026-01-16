@@ -252,6 +252,12 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
     user_id = cb.from_user.id
     chat_id = cb.message.chat.id
 
+    verify_cache = VERIFY_CACHE.get(user_id)
+    
+    if not verify_cache or verify_cache["user"].id != user_id:
+        await cb.answer(s("antispam_verify_not_for_you"), show_alert=True)
+        return
+
     await c.restrict_chat_member(
         chat_id,
         user_id,
@@ -263,7 +269,7 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
         ),
     )
 
-    verify_cache = VERIFY_CACHE.pop(user_id, None)
+    VERIFY_CACHE.pop(user_id, None)
     if verify_cache and isinstance(verify_cache, dict):
         task = verify_cache.get("task")
         if task:
@@ -275,8 +281,6 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
             verify_cache["user"],
             verify_cache["strings"],
         )
-    elif verify_cache:
-        verify_cache.cancel()
 
     await cb.message.edit_text(s("antispam_verify_success").format(user=cb.from_user.mention))
 
