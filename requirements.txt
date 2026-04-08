@@ -18,3 +18,4 @@ tenacity
 pyyaml
 loguru
 playwright
+meval

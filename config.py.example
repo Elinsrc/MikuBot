@@ -44,3 +44,10 @@ PREFIXES: List[str] = ["/", "!"]
 
 # List of disabled plugins
 DISABLED_PLUGINS: List[str] = []
+
+STEAM_API_KEY = ""
+
+# Shit goldsrc spam servers
+IGNORE_SERVERS = [
+    "EMOTO",
+]
