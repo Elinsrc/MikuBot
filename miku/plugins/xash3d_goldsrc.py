@@ -85,7 +85,7 @@ class ServerManager:
                 return
 
             engine_label = (
-                s("xash_server") if info["engine"] == "xash3d" else s("goldsrc_server")
+                s("xash3d_server") if info["engine"] == "xash3d" else s("goldsrc_server")
             )
             server_info = (
                 f"{engine_label} {info['host']}\n"
