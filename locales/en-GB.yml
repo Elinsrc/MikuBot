@@ -243,7 +243,7 @@ antispam_enable: "Enabled ✅\n\nTo disable, use the command: <code>/antispam of
 antispam_disable: "Disabled ❌\n\nTo enable, use the command: <code>/antispam on</code>"
 antispam_mode_status: "🛡️ Current anti-spam status: {status}"
 antispam_ban_msg: "🛡️ Spam bot {user} was banned."
-antispam_verify_msg: "Hey {user}, solve the equation to pass verification: <b>{question}</b>"
+antispam_verify_msg: "Hey {user}, solve the equation within 1 minute to pass verification: <b>{question}</b>"
 antispam_verify_not_for_you: "🛡️ This button is not for you! ❌"
 antispam_verify_success: "{user} has successfully passed the verification! ✅"
 antispam_verify_alert_wrong: "❌ Incorrect answer! Remaining attempts: <b>{attempts}</b>"
