@@ -3,6 +3,7 @@
 # Copyright (c) 2025 Elinsrc
 
 import asyncio
+import random
 
 from hydrogram import Client, filters
 from hydrogram.enums import ParseMode, ChatMemberStatus as CMS, ChatType
@@ -225,20 +226,68 @@ async def greet_new_members(c: Client, m: ChatMemberUpdated, s: Strings):
                 permissions=ChatPermissions()
                 )
 
-            keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(s("im_notbot_btn"), callback_data="antispam_verify")]])
+            operation = random.choice(["+", "-", "*", "/"])
+            
+            if operation == "+":
+                num1 = random.randint(1, 10)
+                num2 = random.randint(1, 10)
+                correct_answer = num1 + num2
+                question_text = f"{num1} + {num2} = ?"
 
+            elif operation == "-":
+                num1 = random.randint(1, 10)
+                num2 = random.randint(1, num1)
+                correct_answer = num1 - num2
+                question_text = f"{num1} - {num2} = ?"
+
+            elif operation == "*":
+                num1 = random.randint(1, 10)
+                num2 = random.randint(1, 10)
+                correct_answer = num1 * num2
+                question_text = f"{num1} × {num2} = ?"
+
+            elif operation == "/":
+                num2 = random.randint(1, 10)
+                correct_answer = random.randint(1, 10)
+                num1 = num2 * correct_answer
+                question_text = f"{num1} ÷ {num2} = ?"
+
+            options = {correct_answer}
+            while len(options) < 9:
+                max_possible = 100 if operation == "*" or operation == "/" else 20
+                wrong = random.randint(0, max_possible)
+                if wrong != correct_answer: 
+                    options.add(wrong)
+            
+            options_list = list(options)
+            random.shuffle(options_list)
+
+            keyboard_buttons = []
+            row = []
+            for opt in options_list:
+                row.append(InlineKeyboardButton(str(opt), callback_data=f"as_ans:{opt}"))
+                if len(row) == 3:
+                    keyboard_buttons.append(row)
+                    row = []
+
+            keyboard = InlineKeyboardMarkup(keyboard_buttons)
+            
             verify_msg = await c.send_message(
                 m.chat.id,
-                s("antispam_verify_msg").format(user=user.mention),
+                s("antispam_verify_msg").format(user=user.mention, question=question_text),
                 reply_markup=keyboard,
             )
 
             task = asyncio.create_task(antispam_timeout(c, m.chat.id, user.id, verify_msg.id))
+            
             VERIFY_CACHE[user.id] = {
                 "task": task,
                 "chat_id": m.chat.id,
                 "user": user,
                 "strings": s,
+                "correct_answer": correct_answer,
+                "attempts": 3,
+                "question_text": question_text
             }
 
             return 
@@ -246,7 +295,7 @@ async def greet_new_members(c: Client, m: ChatMemberUpdated, s: Strings):
     await send_welcome_greeting(c, m.chat.id, user, s)
 
 
-@Client.on_callback_query(filters.regex("^antispam_verify$"))
+@Client.on_callback_query(filters.regex("^as_ans:"))
 @use_chat_lang
 async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
     user_id = cb.from_user.id
@@ -258,22 +307,27 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
         await cb.answer(s("antispam_verify_not_for_you"), show_alert=True)
         return
 
-    await c.restrict_chat_member(
-        chat_id,
-        user_id,
-        permissions=ChatPermissions(
-            can_send_messages=True,
-            can_send_media_messages=True,
-            can_send_other_messages=True,
-            can_add_web_page_previews=True,
-        ),
-    )
+    chosen_answer = int(cb.data.split(":")[1])
+    correct_answer = verify_cache["correct_answer"]
 
-    VERIFY_CACHE.pop(user_id, None)
-    if verify_cache and isinstance(verify_cache, dict):
+    if chosen_answer == correct_answer:
+        await c.restrict_chat_member(
+            chat_id,
+            user_id,
+            permissions=ChatPermissions(
+                can_send_messages=True,
+                can_send_media_messages=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True,
+            ),
+        )
+
+        VERIFY_CACHE.pop(user_id, None)
         task = verify_cache.get("task")
         if task:
             task.cancel()
+        
+        await cb.message.edit_text(s("antispam_verify_success").format(user=cb.from_user.mention))
         
         await send_welcome_greeting(
             c,
@@ -281,8 +335,37 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
             verify_cache["user"],
             verify_cache["strings"],
         )
+        return
 
-    await cb.message.edit_text(s("antispam_verify_success").format(user=cb.from_user.mention))
+    verify_cache["attempts"] -= 1
+    remaining_attempts = verify_cache["attempts"]
+
+    if remaining_attempts > 0:
+        alert_text = s("antispam_verify_alert_wrong").format(attempts=remaining_attempts)
+        await cb.answer(alert_text, show_alert=True)
+        
+        user_mention = verify_cache["user"].mention
+        question = verify_cache["question_text"]
+        
+        base_text = s("antispam_verify_msg").format(user=user_mention, question=question)
+        wrong_text = f"{base_text}\n\n{alert_text}"
+        
+        await cb.message.edit_text(
+            wrong_text,
+            reply_markup=cb.message.reply_markup
+        )
+    else:
+        VERIFY_CACHE.pop(user_id, None)
+        task = verify_cache.get("task")
+        if task:
+            task.cancel()
+
+        try:
+            await cb.message.delete()
+        except Exception:
+            pass
+
+        await c.ban_chat_member(chat_id, user_id)
 
 
 commands.add_command("resetwelcome", "admin")
