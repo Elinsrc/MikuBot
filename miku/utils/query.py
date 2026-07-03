@@ -7,6 +7,7 @@ from typing import Optional
 import asyncio_dgram
 import aiohttp
 import re
+from loguru import logger
 
 TIMEOUT = 2.0
 
@@ -14,12 +15,6 @@ GOLDSRC_GAMES = {
     "cstrike": 10,
     "valve": 70,
 }
-
-XASH_MS = [
-    ("mentality.rip", 27010),
-    ("mentality.rip", 27011),
-    ("ms2.mentality.rip", 27010),
-]
 
 def fmt_time(seconds):
     seconds = int(float(seconds))
@@ -67,29 +62,33 @@ class BaseServerQuery:
 
 
 class XashServerQuery(BaseServerQuery):
-    def __init__(self, timeout: float = TIMEOUT, xash_ms: list = None):
+    def __init__(self, timeout: float = TIMEOUT):
         super().__init__(timeout)
-        self.xash_ms = xash_ms or XASH_MS
 
     async def get_server_list(self, gamedir: str) -> list:
         servers = []
-        query = b"1\xff0.0.0.0:0\x00\\nat\\0\\gamedir\\%b\\clver\\0.21\\buildnum\\0000\x00" % gamedir.encode()
+        url = f"https://xash.su/server-list/v1/servers/{gamedir}"
 
-        for host, port in self.xash_ms:
-            data = await self._udp_send_recv(host, port, query, 3.0)
-            if not data:
-                continue
-
-            data = data[6:]
-            for i in range(0, len(data), 6):
-                ip1, ip2, ip3, ip4, srv_port = struct.unpack(
-                    ">BBBBH", data[i : i + 6]
-                )
-                ip = f"{ip1}.{ip2}.{ip3}.{ip4}"
-                if ip == "0.0.0.0":
-                    continue
-                servers.append((ip, srv_port))
-
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                if response.status != 200:
+                    return []
+                    
+                data = await response.text()
+                    
+                pattern = r"^(?:ip|gs)\s+([a-zA-Z0-9.-]+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}):(\d+)"
+                    
+                for line in data.splitlines():
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                        
+                    match = re.match(pattern, line)
+                    if match:
+                        ip = match.group(1)
+                        port = int(match.group(2))
+                        servers.append((ip, port))
+                            
         return servers
 
     async def query(self, ip: str, port: int) -> Optional[dict]:

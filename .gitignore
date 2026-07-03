@@ -14,7 +14,7 @@ venv.bak/
 miku/*.session*
 
 # Database
-*.db
+*.db*
 
 # Bot personal config file
 config.py
