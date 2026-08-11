@@ -14,6 +14,8 @@ import re
 from datetime import datetime, timedelta
 from functools import partial
 from string import Formatter
+import inspect
+import pathlib
 
 import httpx
 from hydrogram import Client, filters
@@ -26,7 +28,7 @@ from hydrogram.types import (
     User,
 )
 
-from config import SUDOERS
+from config import SUDOERS, DISABLED_PLUGINS
 
 BTN_URL_REGEX = re.compile(r"(\[([^\[]+?)\]\(buttonurl:(?:/{0,2})(.+?)(:same)?\))")
 
@@ -206,6 +208,13 @@ class BotCommands:
         category: str,
         aliases: list | None = None,
     ):
+        stack = inspect.stack()
+        caller_frame = stack[1] 
+        module_name = pathlib.Path(caller_frame.filename).stem
+        
+        if module_name in DISABLED_PLUGINS:
+            return
+        
         description_key = f"cmd_{command}_description"
 
         if self.commands.get(category) is None:
@@ -246,6 +255,13 @@ class InlineBotCommands:
         command: str,
         aliases: list | None = None,
     ):
+        stack = inspect.stack()
+        caller_frame = stack[1] 
+        module_name = pathlib.Path(caller_frame.filename).stem
+        
+        if module_name in DISABLED_PLUGINS:
+            return
+        
         description_key = f"inline_cmd_{command.split(maxsplit=1)[0]}_description"
 
         self.commands.append({
