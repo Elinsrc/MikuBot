@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 class Music:
     """Service for searching and downloading music."""
 
+    BASE_URL = "vuxo7.com"
+
     def __init__(self, config: ServiceConfig | None = None) -> None:
         """Initialize music service with optional configuration."""
         self._config = config or ServiceConfig()
@@ -74,7 +76,7 @@ class Music:
 
     async def get_top_hits(self) -> list[Track]:
         """Get top tracks."""
-        return await self._parse_tracks("http://anonim.elinsrc-server.ru/index.php?q=vuxo7.com")
+        return await self._parse_tracks(f"https://{self.BASE_URL}")
 
     @retry(
         stop=stop_after_attempt(3),
@@ -169,4 +171,4 @@ class Music:
         except UnicodeError:
             subdomain = query
 
-        return f"http://anonim.elinsrc-server.ru/index.php?q={subdomain}.vuxo7.com"
+        return f"https://{subdomain}.{self.BASE_URL}"
