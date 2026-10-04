@@ -177,7 +177,7 @@ async def goldsrc_chat(c: Client, m: Message, s: Strings):
     servers_list = await server_manager.get_servers_info("goldsrc", gamedir, s)
 
     if not servers_list:
-        await m.reply_text(s("xash3d_no_servers"))
+        await m.reply_text(s("goldsrc_no_servers"))
         return
 
     mid = m.id
