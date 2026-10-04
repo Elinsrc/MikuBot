@@ -1,4 +1,4 @@
-# Copyright (c) 2025 goldpulpy
+# Copyright (c) 2026 goldpulpy
 # Original project: https://github.com/goldpulpy/TelegramMusicBot
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
