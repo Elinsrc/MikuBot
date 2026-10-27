@@ -19,6 +19,30 @@ from miku.utils.musiclib import Music
 from miku.utils.localization import Strings, use_chat_lang
 
 
+def detect_audio_ext(data: bytes) -> str:
+    if data[:2] in (b"\xff\xf1", b"\xff\xf9"):
+        return "aac"
+    if data[4:8] == b"ftyp":
+        return "m4a"
+    if data[:4] == b"OggS":
+        return "ogg"
+    if data[:4] == b"fLaC":
+        return "flac"
+    return "mp3"
+
+
+def prepare_audio(audio_bytes: bytes, title: str) -> tuple[io.BytesIO, int]:
+    ext = detect_audio_ext(audio_bytes)
+    audio_file = io.BytesIO(audio_bytes)
+    audio_file.name = f"{title}.{ext}"
+
+    audio = File(audio_file)
+    duration = int(audio.info.length)
+
+    audio_file.seek(0)
+    return audio_file, duration
+
+
 class MusicService:
     def __init__(self):
         self.tracks_map = {}
@@ -137,16 +161,12 @@ async def play_track(c: Client, cb: CallbackQuery):
             track = tracks[track_index]
             audio_bytes = await service.get_audio_bytes(track)
 
-            audio_file = io.BytesIO(audio_bytes)
-            audio_file.name = f"{track.title}.mp3"
-
-            audio = File(audio_file)
-            duration = audio.info.length
+            audio_file, duration = prepare_audio(audio_bytes, track.title)
 
             await cb.message.reply_audio(
                 audio_file,
                 title=track.title,
-                duration=int(duration),
+                duration=duration,
                 performer=track.performer,
                 reply_to_message_id=mid
             )
@@ -172,16 +192,12 @@ async def send_all_tracks(c: Client, cb: CallbackQuery):
         async with Music() as service:
             audio_bytes = await service.get_audio_bytes(track)
 
-            audio_file = io.BytesIO(audio_bytes)
-            audio_file.name = f"{track.title}.mp3"
-
-            audio = File(audio_file)
-            duration = audio.info.length
+            audio_file, duration = prepare_audio(audio_bytes, track.title)
 
             await cb.message.reply_audio(
                 audio_file,
                 title=track.title,
-                duration=int(duration),
+                duration=duration,
                 performer=track.performer,
                 reply_to_message_id=mid
             )
