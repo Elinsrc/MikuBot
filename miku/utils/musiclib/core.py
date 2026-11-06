@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, NoReturn, Self
 from urllib.parse import quote
 
 import aiohttp
+import unicodedata
 from aiohttp import ClientTimeout
 from bs4 import BeautifulSoup, Tag
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -82,8 +83,9 @@ class Music:
             msg = "Failed to initialize session"
             raise MusicServiceError(msg)
 
-        url = self.build_search_query(keyword)
-        logger.info("Searching music with keyword: {}", keyword)
+        clean_keyword = unicodedata.normalize("NFKC", keyword).strip()
+        url = self.build_search_query(clean_keyword)
+        logger.info("Searching music with keyword: {}", clean_keyword)
 
         return await self._parse_tracks(url)
 
