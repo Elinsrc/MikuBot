@@ -20,7 +20,7 @@ from miku.utils.decorators import aiowrap
 from miku.utils.localization import Strings, use_chat_lang
 
 YOUTUBE_REGEX = re.compile(
-    r"(?m)http(?:s?):\/\/(?:www\.)?(?:music\.)?youtu(?:be\.com\/(watch\?v=|shorts/)|\.be\/|)([\w\-\_]*)(&(amp;)?[\w\?=]*)?"
+    r"(?m)(?:https?:\/\/)?(?:www\.|m\.|music\.)?youtu(?:be\.com\/(?:watch\?v=|shorts\/)|\.be\/)([\w\-\_]+)(?:[?&][\w\?=]*)?"
 )
 
 TIME_REGEX = re.compile(r"[?&]t=([0-9]+)")
@@ -85,13 +85,16 @@ async def ytdlcmd(c: Client, m: Message, s: Strings):
 
     ydl = YoutubeDL({"noplaylist": True})
 
-    match = YOUTUBE_REGEX.match(url)
+    match = YOUTUBE_REGEX.search(url)
 
     t = TIME_REGEX.search(url)
     temp = t.group(1) if t else 0
 
     if match:
-        yt = await extract_info(ydl, match.group(), download=False)
+        matched_url = match.group()
+        if not matched_url.startswith(("http://", "https://")):
+            matched_url = f"https://{matched_url}"
+        yt = await extract_info(ydl, matched_url, download=False)
     else:
         yt = await extract_info(ydl, f"ytsearch:{url}", download=False)
         yt = yt["entries"][0]
