@@ -29,6 +29,55 @@ from miku.database.antispam import get_antispam, enable_antispam
 VERIFY_CACHE = {}
 
 
+def generate_captcha():
+    operation = random.choice(["+", "-", "*", "/"])
+
+    if operation == "+":
+        num1 = random.randint(1, 10)
+        num2 = random.randint(1, 10)
+        correct_answer = num1 + num2
+        question_text = f"{num1} + {num2} = ?"
+
+    elif operation == "-":
+        num1 = random.randint(1, 10)
+        num2 = random.randint(1, num1)
+        correct_answer = num1 - num2
+        question_text = f"{num1} - {num2} = ?"
+
+    elif operation == "*":
+        num1 = random.randint(1, 10)
+        num2 = random.randint(1, 10)
+        correct_answer = num1 * num2
+        question_text = f"{num1} × {num2} = ?"
+
+    elif operation == "/":
+        num2 = random.randint(1, 10)
+        correct_answer = random.randint(1, 10)
+        num1 = num2 * correct_answer
+        question_text = f"{num1} ÷ {num2} = ?"
+
+    options = {correct_answer}
+    while len(options) < 9:
+        max_possible = 100 if operation == "*" or operation == "/" else 20
+        wrong = random.randint(0, max_possible)
+        if wrong != correct_answer:
+            options.add(wrong)
+
+    options_list = list(options)
+    random.shuffle(options_list)
+
+    keyboard_buttons = []
+    row = []
+    for opt in options_list:
+        row.append(InlineKeyboardButton(str(opt), callback_data=f"as_ans:{opt}"))
+        if len(row) == 3:
+            keyboard_buttons.append(row)
+            row = []
+
+    keyboard = InlineKeyboardMarkup(keyboard_buttons)
+    return question_text, correct_answer, keyboard
+
+
 async def send_welcome_greeting(c: Client, chat_id: int, user, s: Strings):
     welcome, welcome_enabled = await get_welcome(chat_id)
     if not welcome_enabled:
@@ -224,53 +273,9 @@ async def greet_new_members(c: Client, m: ChatMemberUpdated, s: Strings):
                 m.chat.id,
                 user.id,
                 permissions=ChatPermissions()
-                )
+            )
 
-            operation = random.choice(["+", "-", "*", "/"])
-            
-            if operation == "+":
-                num1 = random.randint(1, 10)
-                num2 = random.randint(1, 10)
-                correct_answer = num1 + num2
-                question_text = f"{num1} + {num2} = ?"
-
-            elif operation == "-":
-                num1 = random.randint(1, 10)
-                num2 = random.randint(1, num1)
-                correct_answer = num1 - num2
-                question_text = f"{num1} - {num2} = ?"
-
-            elif operation == "*":
-                num1 = random.randint(1, 10)
-                num2 = random.randint(1, 10)
-                correct_answer = num1 * num2
-                question_text = f"{num1} × {num2} = ?"
-
-            elif operation == "/":
-                num2 = random.randint(1, 10)
-                correct_answer = random.randint(1, 10)
-                num1 = num2 * correct_answer
-                question_text = f"{num1} ÷ {num2} = ?"
-
-            options = {correct_answer}
-            while len(options) < 9:
-                max_possible = 100 if operation == "*" or operation == "/" else 20
-                wrong = random.randint(0, max_possible)
-                if wrong != correct_answer: 
-                    options.add(wrong)
-            
-            options_list = list(options)
-            random.shuffle(options_list)
-
-            keyboard_buttons = []
-            row = []
-            for opt in options_list:
-                row.append(InlineKeyboardButton(str(opt), callback_data=f"as_ans:{opt}"))
-                if len(row) == 3:
-                    keyboard_buttons.append(row)
-                    row = []
-
-            keyboard = InlineKeyboardMarkup(keyboard_buttons)
+            question_text, correct_answer, keyboard = generate_captcha()
             
             verify_msg = await c.send_message(
                 m.chat.id,
@@ -311,15 +316,11 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
     correct_answer = verify_cache["correct_answer"]
 
     if chosen_answer == correct_answer:
+        chat = await c.get_chat(chat_id)
         await c.restrict_chat_member(
             chat_id,
             user_id,
-            permissions=ChatPermissions(
-                can_send_messages=True,
-                can_send_media_messages=True,
-                can_send_other_messages=True,
-                can_add_web_page_previews=True,
-            ),
+            permissions=chat.permissions,
         )
 
         VERIFY_CACHE.pop(user_id, None)
@@ -343,16 +344,18 @@ async def antispam_verify(c: Client, cb: CallbackQuery, s: Strings):
     if remaining_attempts > 0:
         alert_text = s("antispam_verify_alert_wrong").format(attempts=remaining_attempts)
         await cb.answer(alert_text, show_alert=True)
+
+        question_text, correct_answer, keyboard = generate_captcha()
+        verify_cache["correct_answer"] = correct_answer
+        verify_cache["question_text"] = question_text
         
         user_mention = verify_cache["user"].mention
-        question = verify_cache["question_text"]
-        
-        base_text = s("antispam_verify_msg").format(user=user_mention, question=question)
+        base_text = s("antispam_verify_msg").format(user=user_mention, question=question_text)
         wrong_text = f"{base_text}\n\n{alert_text}"
         
         await cb.message.edit_text(
             wrong_text,
-            reply_markup=cb.message.reply_markup
+            reply_markup=keyboard
         )
     else:
         VERIFY_CACHE.pop(user_id, None)
