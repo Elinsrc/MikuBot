@@ -262,10 +262,13 @@ async def greet_new_members(c: Client, m: ChatMemberUpdated, s: Strings):
         if spam_user:
             await c.ban_chat_member(m.chat.id, user.id)
 
-            await c.send_message(
+            sent_msg = await c.send_message(
                 m.chat.id,
                 s("antispam_ban_msg").format(user=user.mention),
             )
+
+            await asyncio.sleep(10)
+            await sent_msg.delete()
             return
         
         if m.chat.type == ChatType.SUPERGROUP:
